@@ -1,12 +1,15 @@
 package database
 
-import "github.com/go-pg/pg/v10"
+import (
+	"github.com/go-pg/pg/v10"
+	"github.com/rodrigofrumento/go-blog/internal/conf"
+)
 
-func NewDBOptions() *pg.Options {
+func NewDBOptions(cfg conf.Config) *pg.Options {
 	return &pg.Options{
-		Addr:     "localhost:5432",
-		Database: "go_blog",
-		User:     "postgres",
-		Password: "postgres",
+		Addr:     cfg.DbHost + ":" + cfg.Port,
+		Database: cfg.DbName,
+		User:     cfg.DbUser,
+		Password: cfg.DbPassword,
 	}
 }

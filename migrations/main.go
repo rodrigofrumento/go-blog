@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/go-pg/migrations/v8"
+	"github.com/rodrigofrumento/go-blog/internal/conf"
 	"github.com/rodrigofrumento/go-blog/internal/database"
 	"github.com/rodrigofrumento/go-blog/internal/store"
 )
@@ -26,7 +27,7 @@ func main() {
 	flag.Usage = usage
 	flag.Parse()
 
-	store.SetDBConnection(database.NewDBOptions())
+	store.SetDBConnection(database.NewDBOptions(conf.NewConfig()))
 	db := store.GetDBConnection()
 
 	oldVersion, newVersion, err := migrations.Run(db, flag.Args()...)
