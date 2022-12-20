@@ -1,9 +1,12 @@
 package store
 
 import (
+	"context"
 	"crypto/rand"
 	"time"
 
+	"github.com/go-pg/pg/v10"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -15,6 +18,7 @@ type User struct {
 	Salt           []byte `json:"-"`
 	CreatedAt      time.Time
 	ModifiedAt     time.Time
+	Posts          []*Post `json:"-" pg:"fk:user_id,rel:has-many,on_delete:CASCADE"`
 }
 
 func AddUser(user *User) error {
@@ -33,9 +37,10 @@ func AddUser(user *User) error {
 
 	_, err = db.Model(user).Returning("*").Insert()
 	if err != nil {
-		return err
+		log.Error().Err(err).Msg("Error inserting new user")
+		return dbError(err)
 	}
-	return err
+	return nil
 }
 
 func Authenticate(username, password string) (*User, error) {
@@ -54,7 +59,28 @@ func Authenticate(username, password string) (*User, error) {
 func GenerateSalt() ([]byte, error) {
 	salt := make([]byte, 16)
 	if _, err := rand.Read(salt); err != nil {
+		log.Error().Err(err).Msg("Unable to create salt")
 		return nil, err
 	}
 	return salt, nil
+}
+
+func FetchUser(id int) (*User, error) {
+	user := new(User)
+	user.ID = id
+	err := db.Model(user).Returning("*").WherePK().Select()
+	if err != nil {
+		log.Error().Err(err).Msg("Error fetching user")
+		return nil, err
+	}
+	return user, nil
+}
+
+var _ pg.AfterSelectHook = (*User)(nil)
+
+func (user *User) AfterSelect(ctx context.Context) error {
+	if user.Posts == nil {
+		user.Posts = []*Post{}
+	}
+	return nil
 }

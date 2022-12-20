@@ -8,34 +8,27 @@ import (
 )
 
 func signUp(ctx *gin.Context) {
-	user := new(store.User)
-	if err := ctx.Bind(user); err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"err": err.Error()})
-		return
-	}
+	user := ctx.MustGet(gin.BindKey).(*store.User)
 	if err := store.AddUser(user); err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{
-		"msg": "Sign Up successfully",
-		"jwt": "1234565789",
+		"msg": "Signed up successfully.",
+		"jwt": generateJWT(user),
 	})
 }
 
 func signIn(ctx *gin.Context) {
-	user := new(store.User)
-	if err := ctx.Bind(user); err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"err": err.Error()})
-		return
-	}
+	user := ctx.MustGet(gin.BindKey).(*store.User)
 	user, err := store.Authenticate(user.Username, user.Password)
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"err": "Sign In failed"})
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Sign in failed."})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, gin.H{
-		"msg": "Sign In successfully",
-		"jwt": "1234565789",
+		"msg": "Signed in successfully.",
+		"jwt": generateJWT(user),
 	})
 }
