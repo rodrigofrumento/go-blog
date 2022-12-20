@@ -1,9 +1,10 @@
 package conf
 
 import (
-	"log"
 	"os"
 	"strconv"
+
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -14,6 +15,7 @@ const (
 	dbNameKey     = "GO-BLOG_NAME"
 	dbUserKey     = "GO-BLOG_USER"
 	dbPasswordKey = "GO-BLOG_PASSWORD"
+	jwtSecretKey  = "GO-BLOG_JWT_SECRET"
 )
 
 type Config struct {
@@ -24,6 +26,8 @@ type Config struct {
 	DbName     string
 	DbUser     string
 	DbPassword string
+	JwtSecret  string
+	Env        string
 }
 
 func NewConfig() Config {
@@ -67,6 +71,11 @@ func NewConfig() Config {
 		logAndPanic(dbPasswordKey)
 	}
 
+	jwtSecret, ok := os.LookupEnv(jwtSecretKey)
+	if !ok || jwtSecret == "" {
+		logAndPanic(jwtSecretKey)
+	}
+
 	return Config{
 		Host:       host,
 		Port:       port,
@@ -75,10 +84,17 @@ func NewConfig() Config {
 		DbName:     dbName,
 		DbUser:     dbUser,
 		DbPassword: dbPassword,
+		JwtSecret:  jwtSecret,
+		Env:        env,
 	}
 }
 
 func logAndPanic(envVar string) {
-	log.Println("ENV variable not set or not valid: ", envVar)
-	panic(envVar)
+	log.Panic().Str("envVar", envVar).Msg("ENV variable not set or not valid")
+}
+
+func NewTestConfig() Config {
+	testConfig := NewConfig()
+	testConfig.DbName = testConfig.DbName + "_test"
+	return testConfig
 }
